@@ -33,25 +33,48 @@ To write and execute an Assembly language program to perform the factorial of a 
 ---
 
 ## PROGRAM
-```asm
-ORG 0000H
-MOV DPTR,#4500H
-MOVX A,@DPTR
-MOV R0,A
-INC DPTR
-ACALL FACTORIAL
-MOVX @DPTR,A
-SJMP THIN
-FACTORIAL:DEC R0
-CJNE R0,#01H,PRODUCT
-SJMP THICK
-PRODUCT:MOV B,R0
-MUL AB
-ACALL FACTORIAL
-THICK: RET
-THIN:RET
-END
+```ORG 0000H
 
+MOV DPTR,#4500H
+MOVx A,@DPTR
+MOV R0,A
+
+; 16-bit result = 0001H
+MOV 30H,#01H     ; Low byte
+MOV 31H,#00H     ; High byte
+
+LOOP:
+
+; ---- Multiply Low byte ----
+MOV A,30H
+MOV B,R0
+MUL AB
+MOV 32H,A        ; Save low result
+MOV 33H,B        ; Save carry
+
+; ---- Multiply High byte ----
+MOV A,31H
+MOV B,R0
+MUL AB
+
+ADD A,33H        ; Add carry
+MOV 31H,A
+
+MOV 30H,32H      ; Restore low byte
+
+DJNZ R0,LOOP
+
+; Store result
+MOV DPTR,#4501H
+MOV A,30H
+MOVX @DPTR,A
+
+INC DPTR
+MOV A,31H
+MOVX @DPTR,A
+
+HERE: SJMP HERE
+END
 ```
 OUTPUT
 
